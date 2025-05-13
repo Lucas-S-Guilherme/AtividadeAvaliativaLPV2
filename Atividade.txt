@@ -1,0 +1,17 @@
+Implementar um sistema de Concursos que realizará as seguintes funções:
+
+    Cadastro de Cargo
+    Cadastro de  Candidato
+    Cadastro de Candidato com inscrição
+    Inscrição de Candidato
+    Lançamentos de Notas
+    Resultado Preliminar (classificado pela nota maior)
+    Resultado Final (classificado por critérios): 
+
+     Maior nota nos conhecimentos específico
+     Maior nota nos conhecimentos gerais
+     Candidato mais idoso
+
+Entrega da Atividade: 20 Pontos. 
+
+Apresentação: 10 pontos. 
