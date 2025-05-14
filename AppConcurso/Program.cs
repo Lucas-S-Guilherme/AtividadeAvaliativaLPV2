@@ -20,6 +20,12 @@ builder.Services.AddScoped<InscricaoController>();
 string mySqlConexao = builder.Configuration.GetConnectionString("BaseConexaoMySql");
 builder.Services.AddDbContextPool<ContextoBD>(options => options.UseMySql(mySqlConexao, ServerVersion.AutoDetect(mySqlConexao)));
 
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddControllers();
+builder.Services.AddLogging();
+builder.Services.AddControllersWithViews();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

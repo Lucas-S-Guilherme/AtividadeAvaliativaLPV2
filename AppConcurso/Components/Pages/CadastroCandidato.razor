@@ -1,12 +1,13 @@
 @page "/cadastro-candidato"
-@using AppConcurso.Models;
-@using AppConcurso.Controllers;
-@inject CandidatoController candControl;
-@inject NavigationManager navegacao;
+@using AppConcurso.Models
+@using AppConcurso.Controllers
+@inject CandidatoController candControl
+@inject NavigationManager navegacao
+@inject ILogger<CadastroCandidato> logger
 
 <h3>CADASTRO DE CANDIDATO</h3>
 
-<EditForm Model="@novoCandidato" OnValidSubmit="@CadastrarCandidato" FormName="formCandidato">
+<EditForm Model="@novoCandidato" OnValidSubmit="@HandleValidSubmit" FormName="CadastroCandidatoForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -14,25 +15,26 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="form-group">
-                    <label>Nome Completo:</label>
-                    <InputText @bind-Value="novoCandidato.Nome" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.Nome)" />
+                    <label for="nome">Nome Completo:</label>
+                    <InputText id="nome" @bind-Value="novoCandidato.Nome" class="form-control" />
+                    <ValidationMessage For="@(() => novoCandidato.Nome)" class="text-danger" />
                 </div>
 
                 <div class="form-group">
-                    <label>CPF:</label>
-                    <InputText @bind-Value="novoCandidato.Cpf" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.Cpf)" />
+                    <label for="cpf">CPF:</label>
+                    <InputText id="cpf" @bind-Value="novoCandidato.Cpf" class="form-control" />
+                    <ValidationMessage For="@(() => novoCandidato.Cpf)" class="text-danger" />
                 </div>
 
                 <div class="form-group">
-                    <label>Data de Nascimento:</label>
-                    <InputDate @bind-Value="novoCandidato.DataNascimento" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.DataNascimento)" />
+                    <label for="dataNascimento">Data de Nascimento:</label>
+                    <InputDate id="dataNascimento" @bind-Value="novoCandidato.DataNascimento" 
+                              @bind-Value:format="yyyy-MM-dd" class="form-control" />
+                    <ValidationMessage For="@(() => novoCandidato.DataNascimento)" class="text-danger" />
                 </div>
 
                 <div class="form-group mt-3">
-                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    <button type="submit" class="btn btn-primary" disabled="@(!context.Validate())">Cadastrar</button>
                     <button type="button" class="btn btn-secondary ml-2" @onclick="Cancelar">Cancelar</button>
                 </div>
             </div>
@@ -40,17 +42,55 @@
     </div>
 </EditForm>
 
-@code {
-    private Candidato novoCandidato = new();
+@if (showSuccess)
+{
+    <div class="alert alert-success mt-3">
+        Candidato cadastrado com sucesso!
+        <button class="btn btn-sm btn-outline-success ml-2" @onclick="NavigateToHome">Voltar à página inicial</button>
+    </div>
+}
 
-    private async Task CadastrarCandidato()
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">
+        @errorMessage
+    </div>
+}
+
+@code {
+    private Candidato novoCandidato = new Candidato { DataNascimento = DateTime.Today };
+    private bool showSuccess = false;
+    private string? errorMessage;
+
+    private async Task HandleValidSubmit()
     {
-        await candControl.Add(novoCandidato);
-        navegacao.NavigateTo("/");
+        try
+        {
+            logger.LogInformation($"Dados antes do envio: Nome={novoCandidato.Nome}, CPF={novoCandidato.Cpf}, Data={novoCandidato.DataNascimento}");
+            
+            await candControl.Add(novoCandidato);
+            showSuccess = true;
+            errorMessage = null;
+            
+            // Limpa o formulário
+            novoCandidato = new Candidato { DataNascimento = DateTime.Today };
+            
+            logger.LogInformation("Cadastro realizado com sucesso");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Erro ao cadastrar candidato");
+            errorMessage = "Erro ao cadastrar candidato. Verifique os dados e tente novamente.";
+        }
     }
 
     private void Cancelar()
     {
         navegacao.NavigateTo("/");
+    }
+
+    private void NavigateToHome()
+    {
+        navegacao.NavigateTo("/", forceLoad: true);
     }
 }

@@ -26,8 +26,25 @@ namespace AppConcurso.Controllers
 
         public async Task Add(Candidato candidato)
         {
-            await _context.Candidatos.AddAsync(candidato);
-            await _context.SaveChangesAsync();
+            if (candidato == null)
+            {
+                throw new ArgumentNullException(nameof(candidato));
+            }
+
+            // Log para depuração
+            Console.WriteLine($"Dados recebidos no controller: Nome={candidato.Nome}, CPF={candidato.Cpf}, Data={candidato.DataNascimento}");
+            
+            try
+            {
+                _context.Candidatos.Add(candidato);
+                await _context.SaveChangesAsync();
+                Console.WriteLine("Dados salvos com sucesso no banco");
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"Erro ao salvar no banco: {ex.InnerException?.Message}");
+                throw;
+            }
         }
     }
 }

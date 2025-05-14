@@ -8,6 +8,8 @@ cpf VARCHAR(45),
 data_nascimento DATE
 );
 
+SELECT * FROM candidato;
+
 CREATE TABLE cargo(
 id INT PRIMARY KEY AUTO_INCREMENT,
 nome_cargo VARCHAR(45),
