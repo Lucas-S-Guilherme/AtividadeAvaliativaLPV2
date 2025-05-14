@@ -9,56 +9,82 @@
 <h3>INSCRIÇÃO DE CANDIDATO</h3>
 
 <div class="container">
-    <nav class="navbar navbar-light" style="background-color: white"></nav>
-
-    <nav class="navbar navbar-light" style="background-color: darkgreen"></nav>
-
-    <div class="row align-items-start">
-        <div class="col">
-            <label for="veiculo" class="form-label">CARGOS:</label>
-            <select @onchange="SelecionarCargos" class="form-select" aria-label="Selecione um Cargo">
-                <option selected>Selecione uma placa</option>
-                @foreach (var item in listaCargos)
-                {
-                    <option value=@item.Id>@item.NomeCargo</option>
-                }
-            </select>
-        </div>
-
-        <div class="col">
+    <div class="row">
+        <div class="col-md-6">
             <div class="form-group">
-                <label for="input-datalist">Selecionar Candidato</label>
-                <input type="text" class="form-control" placeholder="Buscar" list="lista-pessoas" @onchange="SelecionarCandidatos">
-                <datalist id="lista-pessoas">
-                    @* Aqui você pode preencher com os candidatos, exemplo: *@
-                    @* @foreach (var candidato in listaCandidatos) *@
-                    @* { <option value="@candidato.Nome"></option> } *@
-                </datalist>
+                <label>Cargo:</label>
+                <select class="form-control" @bind="cargoId">
+                    <option value="0">Selecione um cargo</option>
+                    @foreach (var cargo in cargos)
+                    {
+                        <option value="@cargo.Id">@cargo.NomeCargo</option>
+                    }
+                </select>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>Candidato (CPF):</label>
+                <input type="text" class="form-control" @bind="cpfCandidato" />
+                <button class="btn btn-secondary mt-2" @onclick="BuscarCandidato">Buscar</button>
             </div>
         </div>
     </div>
+
+    @if (candidato != null)
+    {
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">@candidato.Nome</h5>
+                <p class="card-text">CPF: @candidato.Cpf</p>
+                <p class="card-text">Nascimento: @candidato.DataNascimento.ToShortDateString()</p>
+            </div>
+        </div>
+    }
+
+    <div class="mt-3">
+        <button class="btn btn-primary" @onclick="CadastrarInscricao" disabled="@(candidato == null || cargoId == 0)">
+            Confirmar Inscrição
+        </button>
+        <button class="btn btn-secondary ml-2" @onclick="Cancelar">Cancelar</button>
+    </div>
 </div>
 
-
 @code {
-    private List<Cargo> listaCargos = new List<Cargo>();
-    private List<Candidato> listaCandidatos = new List<Candidato>();
-    
-    private Cargo cargo = new Cargo();
-    private Candidato candidato = new Candidato();
-
-    private bool enabledButton = true;
-    private int numeroInsc = 0;
+    private List<Cargo> cargos = new();
+    private Candidato candidato;
+    private int cargoId;
+    private string cpfCandidato;
 
     protected override async Task OnInitializedAsync()
     {
-        var listaCarg = await cargoControl.ListaCargos();
-        var listaCand = await candControl.ListaCandidatos();
-        var listaInsc = await inscControl.ListaInscricoes();
+        cargos = await cargoControl.ListaCargos();
+    }
 
-        listaCargos = listaCarg;
-        listaCandidatos = listaCand;
-        numeroInsc = 10000 + listaInsc.Count + 1;
+    private async Task BuscarCandidato()
+    {
+        candidato = await candControl.ObterPorCpf(cpfCandidato);
+    }
 
+    private async Task CadastrarInscricao()
+    {
+        var cargo = await cargoControl.ObterPorId(cargoId);
+        
+        var inscricao = new Inscricao
+        {
+            CargoIdFk = cargoId,
+            CandidatoIdFk = candidato.Id,
+            Cargo = cargo,
+            Candidato = candidato
+        };
+
+        await inscControl.Add(inscricao);
+        navegacao.NavigateTo("/");
+    }
+
+    private void Cancelar()
+    {
+        navegacao.NavigateTo("/");
     }
 }

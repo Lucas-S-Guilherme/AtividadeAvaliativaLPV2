@@ -1,0 +1,70 @@
+@page "/resultados/{cargoId}"
+@using AppConcurso.Models;
+@using AppConcurso.Controllers;
+@inject InscricaoController inscControl;
+
+<h3>RESULTADOS</h3>
+
+<div class="container">
+    <h4>Resultado Preliminar (por maior nota total)</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Candidato</th>
+                <th>Nota Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in inscricoes.OrderByDescending(i => i.NotaConhGerais + i.NotaConhEspecificos).Select((i, index) => new { Inscricao = i, Posicao = index + 1 }))
+            {
+                <tr>
+                    <td>@item.Posicao</td>
+                    <td>@item.Inscricao.Candidato.Nome</td>
+                    <td>@(item.Inscricao.NotaConhGerais + item.Inscricao.NotaConhEspecificos)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 class="mt-5">Resultado Final (por critérios)</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Candidato</th>
+                <th>Nota Específicos</th>
+                <th>Nota Gerais</th>
+                <th>Idade</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in inscricoes
+                .OrderByDescending(i => i.NotaConhEspecificos)
+                .ThenByDescending(i => i.NotaConhGerais)
+                .ThenByDescending(i => i.Candidato.DataNascimento)
+                .Select((i, index) => new { Inscricao = i, Posicao = index + 1 }))
+            {
+                <tr>
+                    <td>@item.Posicao</td>
+                    <td>@item.Inscricao.Candidato.Nome</td>
+                    <td>@item.Inscricao.NotaConhEspecificos</td>
+                    <td>@item.Inscricao.NotaConhGerais</td>
+                    <td>@((DateTime.Now.Year - item.Inscricao.Candidato.DataNascimento.Year)) anos</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public int cargoId { get; set; }
+
+    private List<Inscricao> inscricoes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        inscricoes = await inscControl.ObterPorCargo(cargoId);
+    }
+}

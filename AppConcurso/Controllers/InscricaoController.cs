@@ -16,19 +16,43 @@ namespace AppConcurso.Controllers
 
         public async Task<List<Inscricao>> ListaInscricoes()
         {
-            var inscricoes = await _context.Inscricoes.Include(x => x.Cargo).Include(x => x.Candidato).ToListAsync();
-            return inscricoes;
+            return await _context.Inscricoes
+                .Include(x => x.Cargo)
+                .Include(x => x.Candidato)
+                .ToListAsync();
         }
 
         public async Task Add(Inscricao inscricao)
         {
+            inscricao.DataInscricao = DateTime.Today;
+            inscricao.NumeroInsc = GerarNumeroInscricao();
             await _context.Inscricoes.AddAsync(inscricao);
-        }
-
-        public async Task Salvar()
-        {
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<Inscricao>> ObterPorCargo(int cargoId)
+        {
+            return await _context.Inscricoes
+                .Where(i => i.CargoIdFk == cargoId)
+                .Include(i => i.Candidato)
+                .ToListAsync();
+        }
+
+        public async Task LancarNotas(int inscricaoId, decimal notaGerais, decimal notaEspecificos)
+        {
+            var inscricao = await _context.Inscricoes.FindAsync(inscricaoId);
+            if (inscricao != null)
+            {
+                inscricao.NotaConhGerais = notaGerais;
+                inscricao.NotaConhEspecificos = notaEspecificos;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private string GerarNumeroInscricao()
+        {
+            var count = _context.Inscricoes.Count();
+            return $"{DateTime.Now.Year}{count + 1:00000}";
+        }
     }
 }

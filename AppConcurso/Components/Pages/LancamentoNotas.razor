@@ -1,0 +1,59 @@
+@page "/lancar-notas/{cargoId}"
+@using AppConcurso.Models;
+@using AppConcurso.Controllers;
+@inject InscricaoController inscControl;
+@inject NavigationManager navegacao;
+
+<h3>LANÇAMENTO DE NOTAS</h3>
+
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Candidato</th>
+                <th>Nota Conhecimentos Gerais</th>
+                <th>Nota Conhecimentos Específicos</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inscricao in inscricoes)
+            {
+                <tr>
+                    <td>@inscricao.Candidato.Nome</td>
+                    <td>
+                        <input type="number" step="0.1" class="form-control" 
+                               @bind="inscricao.NotaConhGerais" />
+                    </td>
+                    <td>
+                        <input type="number" step="0.1" class="form-control" 
+                               @bind="inscricao.NotaConhEspecificos" />
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" 
+                                @onclick="() => SalvarNotas(inscricao)">
+                            Salvar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public int cargoId { get; set; }
+
+    private List<Inscricao> inscricoes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        inscricoes = await inscControl.ObterPorCargo(cargoId);
+    }
+
+    private async Task SalvarNotas(Inscricao inscricao)
+    {
+        await inscControl.LancarNotas(inscricao.Id, inscricao.NotaConhGerais, inscricao.NotaConhEspecificos);
+    }
+}

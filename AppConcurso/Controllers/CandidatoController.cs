@@ -16,9 +16,18 @@ namespace AppConcurso.Controllers
 
         public async Task<List<Candidato>> ListaCandidatos()
         {
-            var candidatos = await _context.Candidatos.Include(x => x.Inscricoes).ToListAsync();
-            return candidatos;
+            return await _context.Candidatos.ToListAsync();
         }
 
+        public async Task<Candidato> ObterPorCpf(string cpf)
+        {
+            return await _context.Candidatos.FirstOrDefaultAsync(c => c.Cpf == cpf);
+        }
+
+        public async Task Add(Candidato candidato)
+        {
+            await _context.Candidatos.AddAsync(candidato);
+            await _context.SaveChangesAsync();
+        }
     }
 }
