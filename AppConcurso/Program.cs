@@ -1,10 +1,24 @@
 using AppConcurso.Components;
+using AppConcurso.Contexto;
+using AppConcurso.Controllers;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
+
+// Implementações
+
+builder.Services.AddScoped<CandidatoController>();
+builder.Services.AddScoped<CargoController>();
+builder.Services.AddScoped<InscricaoController>();
+
+string mySqlConexao = builder.Configuration.GetConnectionString("BaseConexaoMySql");
+builder.Services.AddDbContextPool<ContextoBD>(options => options.UseMySql(mySqlConexao, ServerVersion.AutoDetect(mySqlConexao)));
 
 var app = builder.Build();
 

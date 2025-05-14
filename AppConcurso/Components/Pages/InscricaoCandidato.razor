@@ -1,0 +1,64 @@
+@page "/inscricao"
+@using AppConcurso.Models;
+@using AppConcurso.Controllers;
+@inject InscricaoController inscControl;
+@inject CargoController cargoControl;
+@inject CandidatoController candControl;
+@inject NavigationManager navegacao;
+
+<h3>INSCRIÇÃO DE CANDIDATO</h3>
+
+<div class="container">
+    <nav class="navbar navbar-light" style="background-color: white"></nav>
+
+    <nav class="navbar navbar-light" style="background-color: darkgreen"></nav>
+
+    <div class="row align-items-start">
+        <div class="col">
+            <label for="veiculo" class="form-label">CARGOS:</label>
+            <select @onchange="SelecionarCargos" class="form-select" aria-label="Selecione um Cargo">
+                <option selected>Selecione uma placa</option>
+                @foreach (var item in listaCargos)
+                {
+                    <option value=@item.Id>@item.NomeCargo</option>
+                }
+            </select>
+        </div>
+
+        <div class="col">
+            <div class="form-group">
+                <label for="input-datalist">Selecionar Candidato</label>
+                <input type="text" class="form-control" placeholder="Buscar" list="lista-pessoas" @onchange="SelecionarCandidatos">
+                <datalist id="lista-pessoas">
+                    @* Aqui você pode preencher com os candidatos, exemplo: *@
+                    @* @foreach (var candidato in listaCandidatos) *@
+                    @* { <option value="@candidato.Nome"></option> } *@
+                </datalist>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private List<Cargo> listaCargos = new List<Cargo>();
+    private List<Candidato> listaCandidatos = new List<Candidato>();
+    
+    private Cargo cargo = new Cargo();
+    private Candidato candidato = new Candidato();
+
+    private bool enabledButton = true;
+    private int numeroInsc = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var listaCarg = await cargoControl.ListaCargos();
+        var listaCand = await candControl.ListaCandidatos();
+        var listaInsc = await inscControl.ListaInscricoes();
+
+        listaCargos = listaCarg;
+        listaCandidatos = listaCand;
+        numeroInsc = 10000 + listaInsc.Count + 1;
+
+    }
+}
