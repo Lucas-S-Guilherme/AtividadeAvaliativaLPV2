@@ -1,0 +1,56 @@
+@page "/cadastro-cargo"
+@using AppConcurso.Models;
+@using AppConcurso.Controllers;
+@inject CargoController cargoControl;
+@inject NavigationManager navegacao;
+
+<h3>CADASTRO DE CARGO</h3>
+
+<EditForm Model="@novoCargo" OnValidSubmit="@CadastrarCargo" FormName="formCargo">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Nome do Cargo:</label>
+                    <InputText @bind-Value="novoCargo.NomeCargo" class="form-control" />
+                    <ValidationMessage For="@(() => novoCargo.NomeCargo)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Edital:</label>
+                    <InputText @bind-Value="novoCargo.Edital" class="form-control" />
+                    <ValidationMessage For="@(() => novoCargo.Edital)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Salário Base:</label>
+                    <InputNumber @bind-Value="novoCargo.SalarioBase" class="form-control" />
+                    <ValidationMessage For="@(() => novoCargo.SalarioBase)" />
+                </div>
+
+                <div class="form-group mt-3">
+                    <button type="submit" class="btn btn-primary">Cadastrar</button>
+                    <button type="button" class="btn btn-secondary ml-2" @onclick="Cancelar">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private Cargo novoCargo = new();
+
+    private async Task CadastrarCargo()
+    {
+        await cargoControl.Add(novoCargo);
+        navegacao.NavigateTo("/");
+    }
+
+    private void Cancelar()
+    {
+        navegacao.NavigateTo("/");
+    }
+}

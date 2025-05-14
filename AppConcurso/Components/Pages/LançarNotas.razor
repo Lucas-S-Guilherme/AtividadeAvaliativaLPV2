@@ -1,0 +1,92 @@
+@page "/lancar-notas"
+@using AppConcurso.Models;
+@using AppConcurso.Controllers;
+@inject InscricaoController inscControl;
+@inject CargoController cargoControl;
+@inject NavigationManager navegacao;
+
+<h3>LANÇAMENTO DE NOTAS</h3>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <label>Selecione o Cargo:</label>
+            <select @onchange="CarregarInscricoes" class="form-control">
+                <option value="0">Selecione um cargo</option>
+                @foreach (var cargo in cargos)
+                {
+                    <option value="@cargo.Id">@cargo.NomeCargo</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (inscricoes.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Candidato</th>
+                        <th>CPF</th>
+                        <th>Nota Conh. Gerais</th>
+                        <th>Nota Conh. Específicos</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inscricao in inscricoes)
+                    {
+                        <tr>
+                            <td>@inscricao.Candidato.Nome</td>
+                            <td>@inscricao.Candidato.Cpf</td>
+                            <td>
+                                <input type="number" step="0.1" min="0" max="10" 
+                                       @bind="inscricao.NotaConhGerais" class="form-control" />
+                            </td>
+                            <td>
+                                <input type="number" step="0.1" min="0" max="10" 
+                                       @bind="inscricao.NotaConhEspecificos" class="form-control" />
+                            </td>
+                            <td>
+                                <button class="btn btn-primary" 
+                                        @onclick="() => SalvarNotas(inscricao)">
+                                    Salvar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Nenhuma inscrição encontrada para o cargo selecionado.
+        </div>
+    }
+</div>
+
+@code {
+    private List<Cargo> cargos = new();
+    private List<Inscricao> inscricoes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargos = await cargoControl.ListaCargos();
+    }
+
+    private async Task CarregarInscricoes(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int cargoId) && cargoId > 0)
+        {
+            inscricoes = await inscControl.ObterPorCargo(cargoId);
+        }
+    }
+
+    private async Task SalvarNotas(Inscricao inscricao)
+    {
+        await inscControl.LancarNotas(inscricao.Id, inscricao.NotaConhGerais, inscricao.NotaConhEspecificos);
+    }
+}
