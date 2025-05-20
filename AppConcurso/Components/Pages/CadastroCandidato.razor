@@ -1,96 +1,124 @@
-@page "/cadastro-candidato"
+@page "/cadastroCandidato"
+@rendermode InteractiveServer
 @using AppConcurso.Models
 @using AppConcurso.Controllers
-@inject CandidatoController candControl
+@inject CandidatoController candidController
 @inject NavigationManager navegacao
-@inject ILogger<CadastroCandidato> logger
 
-<h3>CADASTRO DE CANDIDATO</h3>
-
-<EditForm Model="@novoCandidato" OnValidSubmit="@HandleValidSubmit" FormName="CadastroCandidatoForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="nome">Nome Completo:</label>
-                    <InputText id="nome" @bind-Value="novoCandidato.Nome" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.Nome)" class="text-danger" />
+<div class="container">
+    <h1>CADASTRO DE CANDIDATO</h1>
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Nome:</label>
+                        <input @bind="candidato.Nome" class="form-control" disabled="@campoBloqueado" />
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="cpf">CPF:</label>
-                    <InputText id="cpf" @bind-Value="novoCandidato.Cpf" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.Cpf)" class="text-danger" />
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>CPF:</label>
+                        <input @bind="candidato.Cpf" class="form-control" disabled="@campoBloqueado" />
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="dataNascimento">Data de Nascimento:</label>
-                    <InputDate id="dataNascimento" @bind-Value="novoCandidato.DataNascimento" 
-                              @bind-Value:format="yyyy-MM-dd" class="form-control" />
-                    <ValidationMessage For="@(() => novoCandidato.DataNascimento)" class="text-danger" />
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Data de Nascimento:</label>
+                        <input @bind="candidato.DataNasc" type="date" class="form-control" disabled="@campoBloqueado" />
+                    </div>
                 </div>
+            </div>
 
-                <div class="form-group mt-3">
-                    <button type="submit" class="btn btn-primary" disabled="@(!context.Validate())">Cadastrar</button>
-                    <button type="button" class="btn btn-secondary ml-2" @onclick="Cancelar">Cancelar</button>
-                </div>
+            <div class="mt-4">
+                @if (novo == false)
+                {
+                    <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+                    <button class="btn btn-secondary ml-2" @onclick="NovoCadastro">Cancelar</button>
+                }
+                else
+                {
+                    <div class="alert alert-success" role="alert">
+                        Salvo com Sucesso!
+                    </div>
+                    <button class="btn btn-success" @onclick="NovoCadastro">Novo Cadastro</button>
+                }
             </div>
         </div>
     </div>
-</EditForm>
 
-@if (showSuccess)
-{
-    <div class="alert alert-success mt-3">
-        Candidato cadastrado com sucesso!
-        <button class="btn btn-sm btn-outline-success ml-2" @onclick="NavigateToHome">Voltar à página inicial</button>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Candidatos Cadastrados</h5>
+        </div>
+        <div class="card-body">
+            @if (candidatosCadastrados == null || candidatosCadastrados.Count == 0)
+            {
+                <p>Nenhum candidato cadastrado.</p>
+            }
+            else
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th class="list-item-header">Nome</th>
+                            <th class="list-item-header">CPF</th>
+                            <th class="list-item-header">Data de Nascimento</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in candidatosCadastrados)
+                        {
+                            <tr>
+                                <td class="list-item-content">@item.Nome</td>
+                                <td class="list-item-content">@item.Cpf</td>
+                                <td class="list-item-content">@item.DataNasc?.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
     </div>
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-3">
-        @errorMessage
-    </div>
-}
+</div>
 
 @code {
-    private Candidato novoCandidato = new Candidato { DataNascimento = DateTime.Today };
-    private bool showSuccess = false;
-    private string? errorMessage;
+    private Candidato candidato = new Candidato();
+    private List<Candidato> candidatosCadastrados = new List<Candidato>();
+    private bool novo = false;
+    private bool campoBloqueado = false;
 
-    private async Task HandleValidSubmit()
+    protected override async Task OnInitializedAsync()
     {
-        try
+        await CarregarCandidatos();
+    }
+
+    private async Task CarregarCandidatos()
+    {
+        candidatosCadastrados = await candidController.ListaCandidatos();
+        StateHasChanged();
+    }
+
+    private async Task Salvar()
+    {
+        if (!string.IsNullOrWhiteSpace(candidato.Nome))
         {
-            logger.LogInformation($"Dados antes do envio: Nome={novoCandidato.Nome}, CPF={novoCandidato.Cpf}, Data={novoCandidato.DataNascimento}");
-            
-            await candControl.Add(novoCandidato);
-            showSuccess = true;
-            errorMessage = null;
-            
-            // Limpa o formulário
-            novoCandidato = new Candidato { DataNascimento = DateTime.Today };
-            
-            logger.LogInformation("Cadastro realizado com sucesso");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Erro ao cadastrar candidato");
-            errorMessage = "Erro ao cadastrar candidato. Verifique os dados e tente novamente.";
+            await candidController.Add(candidato);
+            await candidController.Salvar();
+            novo = true;
+            campoBloqueado = true;
+
+            await CarregarCandidatos();
         }
     }
 
-    private void Cancelar()
+    private void NovoCadastro()
     {
-        navegacao.NavigateTo("/");
+        novo = false;
+        navegacao.NavigateTo("/cadastroCandidato", forceLoad: true);
     }
 
-    private void NavigateToHome()
-    {
-        navegacao.NavigateTo("/", forceLoad: true);
-    }
 }

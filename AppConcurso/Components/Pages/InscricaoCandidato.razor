@@ -1,91 +1,129 @@
 @page "/inscricao"
+@rendermode InteractiveServer
 @using AppConcurso.Models;
 @using AppConcurso.Controllers;
 @inject InscricaoController inscControl;
 @inject CargoController cargoControl;
 @inject CandidatoController candControl;
 @inject NavigationManager navegacao;
-@InteractiveServer
-
-<h3>INSCRIÇÃO DE CANDIDATO</h3>
 
 <div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Cargo:</label>
-                <select class="form-control" @bind="cargoId">
-                    <option value="0">Selecione um cargo</option>
-                    @foreach (var cargo in cargos)
-                    {
-                        <option value="@cargo.Id">@cargo.NomeCargo</option>
-                    }
-                </select>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="form-group">
-                <label>Candidato (CPF):</label>
-                <input type="text" class="form-control" @bind="cpfCandidato" />
-                <button class="btn btn-secondary mt-2" @onclick="BuscarCandidato">Buscar</button>
-            </div>
-        </div>
+    <h1>INSCRIÇÃO DE CANDIDATO</h1>
+
+    <div class="form-group">
+        <label>Número de Inscrição:</label>
+        <input class="form-control" value="@numeroInsc" disabled />
     </div>
 
-    @if (candidato != null)
+    <div class="form-group">
+        <label>Data de Inscrição:</label>
+        <input class="form-control" value="@dataInsc.ToShortDateString()" disabled />
+    </div>
+
+    <div class="form-group">
+        <label>Candidato:</label>
+        <select class="form-control" @onchange="SelecionarCandidatos">
+            <option value="">Selecione um candidato</option>
+            @foreach (var cand in listaCandidatos)
+            {
+                <option value="@cand.Id">@cand.Nome - @cand.Cpf</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Cargo:</label>
+        <select class="form-control" @onchange="SelecionarCargos">
+            <option value="">Selecione um cargo</option>
+            @foreach (var carg in listaCargos)
+            {
+                <option value="@carg.Id">@carg.NomeCargo</option>
+            }
+        </select>
+    </div>
+
+    @if (candidatoId.HasValue)
     {
         <div class="card mt-3">
             <div class="card-body">
-                <h5 class="card-title">@candidato.Nome</h5>
-                <p class="card-text">CPF: @candidato.Cpf</p>
-                <p class="card-text">Nascimento: @candidato.DataNascimento.ToShortDateString()</p>
+                <h5>Dados do Candidato</h5>
+                <p><strong>Nome:</strong> @candidatoSelecionado?.Nome</p>
+                <p><strong>CPF:</strong> @candidatoSelecionado?.Cpf</p>
             </div>
         </div>
     }
 
     <div class="mt-3">
-        <button class="btn btn-primary" @onclick="CadastrarInscricao" disabled="@(candidato == null || cargoId == 0)">
-            Confirmar Inscrição
-        </button>
+        <button class="btn btn-primary" @onclick="Salvar" disabled="@(!enabledButton)">Salvar</button>
         <button class="btn btn-secondary ml-2" @onclick="Cancelar">Cancelar</button>
+        @if (!enabledButton)
+        {
+            <button class="btn btn-success ml-2" @onclick="NovaInscricao">Nova Inscrição</button>
+        }
     </div>
 </div>
 
 @code {
-    private List<Cargo> cargos = new();
-    private Candidato candidato;
-    private int cargoId;
-    private string cpfCandidato;
+    private List<Cargo> listaCargos = new();
+    private List<Candidato> listaCandidatos = new();
+    private List<Inscricao> listaInsc = new();
+    private Candidato? candidatoSelecionado;
+    private int? candidatoId;
+    private int? cargoId;
+    private bool enabledButton = true;
+    private int numeroInsc = 0;
+    private DateTime dataInsc = DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
-        cargos = await cargoControl.ListaCargos();
+        listaCargos = await cargoControl.ListaCargos();
+        listaCandidatos = await candControl.ListaCandidatos();
+        listaInsc = await inscControl.ListaInscricoes();
+        numeroInsc = 10000 + listaInsc.Count + 1;
     }
 
-    private async Task BuscarCandidato()
+    private async Task Salvar()
     {
-        candidato = await candControl.ObterPorCpf(cpfCandidato);
-    }
-
-    private async Task CadastrarInscricao()
-    {
-        var cargo = await cargoControl.ObterPorId(cargoId);
-        
-        var inscricao = new Inscricao
+        if (candidatoId.HasValue && cargoId.HasValue)
         {
-            CargoIdFk = cargoId,
-            CandidatoIdFk = candidato.Id,
-            Cargo = cargo,
-            Candidato = candidato
-        };
+            var inscricao = new Inscricao
+            {
+                NumInscricao = numeroInsc,
+                DataInsc = dataInsc,
+                IdCandidato = candidatoId.Value,
+                IdCargo = cargoId.Value
+            };
 
-        await inscControl.Add(inscricao);
-        navegacao.NavigateTo("/");
+            await inscControl.Add(inscricao);
+            await inscControl.Salvar();
+            
+            enabledButton = false;
+            StateHasChanged();
+        }
     }
 
-    private void Cancelar()
+    private void Cancelar() => navegacao.NavigateTo("/inscricao");
+
+    private void NovaInscricao()
     {
-        navegacao.NavigateTo("/");
+        navegacao.NavigateTo("/inscricao", forceLoad: true);
+    }
+
+    private void SelecionarCandidatos(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            candidatoId = id;
+            candidatoSelecionado = listaCandidatos.FirstOrDefault(c => c.Id == id);
+            StateHasChanged();
+        }
+    }
+
+    private void SelecionarCargos(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int id))
+        {
+            cargoId = id;
+        }
     }
 }

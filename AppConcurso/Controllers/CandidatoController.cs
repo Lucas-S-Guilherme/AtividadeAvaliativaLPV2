@@ -9,42 +9,28 @@ namespace AppConcurso.Controllers
     {
         private readonly ContextoBD _context;
 
-        public CandidatoController(ContextoBD context)
+        public CandidatoController (ContextoBD context)
         {
             _context = context;
         }
 
+        public async Task Add(Candidato candidatos)
+        {
+          await _context.Candidatos.AddAsync(candidatos);
+          
+        }
+
+        public async Task Salvar()
+        {
+            await _context.SaveChangesAsync();
+        }
+
+
         public async Task<List<Candidato>> ListaCandidatos()
         {
-            return await _context.Candidatos.ToListAsync();
+            var candidatos = await _context.Candidatos.Include(x => x.Inscricoes).ToListAsync();
+            return candidatos;
         }
 
-        public async Task<Candidato> ObterPorCpf(string cpf)
-        {
-            return await _context.Candidatos.FirstOrDefaultAsync(c => c.Cpf == cpf);
-        }
-
-        public async Task Add(Candidato candidato)
-        {
-            if (candidato == null)
-            {
-                throw new ArgumentNullException(nameof(candidato));
-            }
-
-            // Log para depuração
-            Console.WriteLine($"Dados recebidos no controller: Nome={candidato.Nome}, CPF={candidato.Cpf}, Data={candidato.DataNascimento}");
-            
-            try
-            {
-                _context.Candidatos.Add(candidato);
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Dados salvos com sucesso no banco");
-            }
-            catch (DbUpdateException ex)
-            {
-                Console.WriteLine($"Erro ao salvar no banco: {ex.InnerException?.Message}");
-                throw;
-            }
-        }
     }
 }

@@ -13,21 +13,22 @@ namespace AppConcurso.Controllers
         {
             _context = context;
         }
+  
+        public async Task Add(Cargo cargos)
+        {
+          await _context.Cargos.AddAsync(cargos);
+          
+        }
+
+        public async Task Salvar()
+        {
+            await _context.SaveChangesAsync();
+        }
 
         public async Task<List<Cargo>> ListaCargos()
         {
-            return await _context.Cargos.ToListAsync();
-        }
-
-        public async Task<Cargo> ObterPorId(int id)
-        {
-            return await _context.Cargos.FindAsync(id);
-        }
-
-        public async Task Add(Cargo cargo)
-        {
-            await _context.Cargos.AddAsync(cargo);
-            await _context.SaveChangesAsync();
+            var cargo = await _context.Cargos.Include(x => x.Inscricoes).ToListAsync();
+            return cargo;
         }
     }
 }

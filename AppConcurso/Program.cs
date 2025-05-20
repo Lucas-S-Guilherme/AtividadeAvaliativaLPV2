@@ -9,22 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-
-
-// Implementações
-
 builder.Services.AddScoped<CandidatoController>();
 builder.Services.AddScoped<CargoController>();
 builder.Services.AddScoped<InscricaoController>();
 
 string mySqlConexao = builder.Configuration.GetConnectionString("BaseConexaoMySql");
-builder.Services.AddDbContextPool<ContextoBD>(options => options.UseMySql(mySqlConexao, ServerVersion.AutoDetect(mySqlConexao)));
-
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-builder.Services.AddControllers();
-builder.Services.AddLogging();
-builder.Services.AddControllersWithViews();
+builder.Services.AddDbContextPool<ContextoBD>(options =>
+options.UseMySql(mySqlConexao, ServerVersion.AutoDetect(mySqlConexao)));
 
 var app = builder.Build();
 

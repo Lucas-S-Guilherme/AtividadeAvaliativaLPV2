@@ -14,45 +14,55 @@ namespace AppConcurso.Controllers
             _context = context;
         }
 
-        public async Task<List<Inscricao>> ListaInscricoes()
-        {
-            return await _context.Inscricoes
-                .Include(x => x.Cargo)
-                .Include(x => x.Candidato)
-                .ToListAsync();
-        }
-
         public async Task Add(Inscricao inscricao)
         {
-            inscricao.DataInscricao = DateTime.Today;
-            inscricao.NumeroInsc = GerarNumeroInscricao();
             await _context.Inscricoes.AddAsync(inscricao);
+        }
+
+        public async Task Salvar()
+        {
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Inscricao>> ObterPorCargo(int cargoId)
+        public async Task<List<Inscricao>> ListaInscricoes()
         {
             return await _context.Inscricoes
-                .Where(i => i.CargoIdFk == cargoId)
+                .Include(i => i.Cargo)
                 .Include(i => i.Candidato)
                 .ToListAsync();
         }
 
-        public async Task LancarNotas(int inscricaoId, decimal notaGerais, decimal notaEspecificos)
+        public async Task<Inscricao> BuscarInscricao(string busca)
         {
-            var inscricao = await _context.Inscricoes.FindAsync(inscricaoId);
-            if (inscricao != null)
+            if (int.TryParse(busca, out int numero))
             {
-                inscricao.NotaConhGerais = notaGerais;
-                inscricao.NotaConhEspecificos = notaEspecificos;
-                await _context.SaveChangesAsync();
+                return await _context.Inscricoes
+                .Include(i => i.Cargo)
+                .Include(i => i.Candidato)
+                .FirstOrDefaultAsync(i => i.NumInscricao == numero);
             }
+
+            return await _context.Inscricoes
+                .Include(i => i.Cargo)
+                .Include(i => i.Candidato)
+                .FirstOrDefaultAsync(i => i.Candidato.Cpf == busca);
         }
 
-        private string GerarNumeroInscricao()
+        public async Task AtualizarNotas(Inscricao inscricao)
         {
-            var count = _context.Inscricoes.Count();
-            return $"{DateTime.Now.Year}{count + 1:00000}";
+            var existente = await _context.Inscricoes.FindAsync(inscricao.Id);
+            inscricao.NotaConhGerais = inscricao.NotaConhGerais;
+            inscricao.NotaConhEspec = inscricao.NotaConhEspec;
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Inscricao>> ObterInscricoesComNotas()
+        {
+            return await _context.Inscricoes
+                .Include(i => i.Candidato)
+                .Include(i => i.Cargo)
+                .Where(i => i.NotaConhEspec != null && i.NotaConhGerais != null)
+                .ToListAsync();
         }
     }
 }
