@@ -1,5 +1,6 @@
 CREATE DATABASE bd_concursos;
 USE bd_concursos;
+#DROP DATABASE bd_concursos;
 
 CREATE TABLE candidato(
 id INT PRIMARY KEY AUTO_INCREMENT,
@@ -19,7 +20,7 @@ salario_base DECIMAL
 
 CREATE TABLE inscricao(
 id INT PRIMARY KEY AUTO_INCREMENT,
-numero_insc VARCHAR(45),
+numero_insc INT,
 data_inscricao DATE,
 nota_conh_gerais DECIMAL,
 nota_conh_especificos DECIMAL,
@@ -29,3 +30,4 @@ cargo_id_fk INT NOT NULL,
 FOREIGN KEY (cargo_id_fk) REFERENCES cargo (id)
 );
 
+DESCRIBE inscricao;
